@@ -1,52 +1,3 @@
-# Week 3 – Exploratory Bayesian Optimization Submission
-
-## Objective of This Submission 
-Test whether **feature-guided, uncertainty-aware sampling** identifies regions of the search space that improve best-observed values for each function (f1–f8), thereby validating or falsifying assumptions about **feature importance, surrogate smoothness, and uncertainty estimates**.  
-e objectnly: **belief revision about the function landscape for each function using controlled experimentation.*
----
-
-## Key Assum(Max 3)
-1. **Surrogate Smoothness:** The surrogate can generalize locally around observed points; predicted trends approximate true function behaviour.  
-2. **Uncertainty Calibration:** Predicted variance from the surrogate accurately reflects regions of high risk or high potential improvement.  
-3. **Feature Relevance:** Inputs identified as strong predictors via partial correlation, Spearman, or mutual information reliably indicate directions for effective exploion.
-
----
-
-## Hypothesis (Directional)
-If assumptions A hold, then a **heteroskedastic Gaussian Process (or GP+RF ensemble for weak/complex functions) with UCB acquisition**, combined with **feature-informed sampling**, will outperform Week 2 baseline in **maximising best value per function** for **f1–f8**, while providing structural insight into feature effects.  
-
-- **Baseline (B):** Week 2 best-observed values  
-- **Metric (X):** Best value per function  
-- **Function (Y):** f1–f8  
-
----
-
-## Methods & Design Choices
-
-| Component | Strategy |
-|-----------|---------|
-| **Surrogate Model** | Heteroskedastic GP; for functions with weak signals (f3, f7), use GP+RF ensemble to capture non-linear/non-monotonic behaviour. |
-| **Acquisition Function** | UCB with **function-specific β**: high for uncertain/weak functions (f3, f4, f7), moderate for predictable functions (f2, f5, f6, f8), low for near-optimal (f1, f8). |
-| **Initialisation Strategy** | Seed with Week 2 best points; add 1–2 exploratory points per function in high-variance regions; feature-guided sampling along high MI or strong partial correlation inputs. |
-| **Budget Allocation** | 1 submission per function per week (mandatory, 8 submissions) + 2 exploratory points for functions with largest residuals (likely f2/f4/f7). |
-| **Constraints** | Respect domain bounds; duplicate points only for local exploitation; avoid overfittiniven small sample sizes. |
-
-
----
-
-## Pre-defined Decision Rule (Per Function)
-
-| Function | Week 4 Submission Plan Based on Week 3 Outcome |
-|----------|-----------------------------------------------|
-| **f1** | Improvement → continue small local exploitation; no improvement → minimal exploration, safe region. |
-| **f2** | Improvement → exploit along X1; no improvement → increase exploratory points along high-variance X1 ± small perturbations. |
-| **f3** | Improvement → focus in promising high-value regions; no improvement → broaden exploratory spread across X1–X4. |
-| **f4** | Improvement → refine sampling near Week 3 high-value regions; no improvement → increase exploratory spread across X1–X4. |
-| **f5** | Improvement → exploit X2/X3/X4; no improvement → test alternate regions indicated by MI plus some random points. |
-| **f6** | Improvement → exploit X4/X5; no improvement → explore less-sampled inputs X1–X3. |
-| **f7** | Improvement → exploit any emerging pattern; no improvement → aggressive exploration across all inputs. |
-| **f8** | Improvement → exploit X1/X3; no improvement → exploratory points along secondary predictors to mitigate small-sample bias. |
-
 # Function Strategies (f1–f8)
 
 ---
@@ -481,3 +432,4 @@ Multiple L-BFGS-B restarts reduce risk of local acquisition traps in 8D.
 ---
 
 This design explicitly tests whether structured exploitation with controlled interior bias produces more stable and reliable optimisation behaviour in high-dimensional settings.
+
