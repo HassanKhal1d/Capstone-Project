@@ -1,4 +1,4 @@
-# Black Box Optimisation
+# Black Box Optimization
 
 
 ## NON-TECHNICAL EXPLANATION OF YOUR PROJECT
