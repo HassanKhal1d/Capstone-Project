@@ -1,36 +1,36 @@
-# Week 3 – Feature‑Guided, Uncertainty‑Aware Exploration Submission
+# Week 3 – Feature-Guided, Uncertainty-Aware Exploration Submission
 
 ## Objective of This Submission
-
 Test whether **feature-guided, uncertainty-aware sampling** identifies regions of the search space that improve best-observed values for each function (f1–f8), thereby validating or falsifying assumptions about **feature importance, surrogate smoothness, and uncertainty estimates**.  
-e objectnly: **belief revision about the function landscape for each function using controlled experimentation.*
+**Single objective only:** belief revision about the function landscape for each function using controlled experimentation.
+
 ---
 
-## Key Assum(Max 3)
+## Key Assumptions (Max 3)
 1. **Surrogate Smoothness:** The surrogate can generalize locally around observed points; predicted trends approximate true function behaviour.  
 2. **Uncertainty Calibration:** Predicted variance from the surrogate accurately reflects regions of high risk or high potential improvement.  
-3. **Feature Relevance:** Inputs identified as strong predictors via partial correlation, Spearman, or mutual information reliably indicate directions for effective exploion.
+3. **Feature Relevance:** Inputs identified as strong predictors via partial correlation, Spearman, or mutual information reliably indicate directions for effective exploitation.  
 
 ---
 
 ## Hypothesis (Directional)
-If assumptions A hold, then a **heteroskedastic Gaussian Process (or GP+RF ensemble for weak/complex functions) with UCB acquisition**, combined with **feature-informed sampling**, will outperform Week 2 baseline in **maximising best value per function** for **f1–f8**, while providing structural insight into feature effects.  
+If assumptions hold, then a **heteroskedastic Gaussian Process (or GP+RF ensemble for weak/complex functions) with UCB acquisition**, combined with **feature-informed sampling**, will outperform the Week 2 baseline in maximising best value per function for f1–f8, while providing structural insight into feature effects.
 
 - **Baseline (B):** Week 2 best-observed values  
 - **Metric (X):** Best value per function  
-- **Function (Y):** f1–f8  
+- **Functions (Y):** f1–f8  
 
 ---
 
 ## Methods & Design Choices
 
 | Component | Strategy |
-|-----------|---------|
-| **Surrogate Model** | Heteroskedastic GP; for functions with weak signals (f3, f7), use GP+RF ensemble to capture non-linear/non-monotonic behaviour. |
-| **Acquisition Function** | UCB with **function-specific β**: high for uncertain/weak functions (f3, f4, f7), moderate for predictable functions (f2, f5, f6, f8), low for near-optimal (f1, f8). |
-| **Initialisation Strategy** | Seed with Week 2 best points; add 1–2 exploratory points per function in high-variance regions; feature-guided sampling along high MI or strong partial correlation inputs. |
-| **Budget Allocation** | 1 submission per function per week (mandatory, 8 submissions) + 2 exploratory points for functions with largest residuals (likely f2/f4/f7). |
-| **Constraints** | Respect domain bounds; duplicate points only for local exploitation; avoid overfittiniven small sample sizes. |
+|----------|---------|
+| Surrogate Model | Heteroskedastic GP; GP+RF ensemble for weak/complex functions (f3, f7) |
+| Acquisition Function | UCB with function-specific β (high for uncertain functions, moderate for structured ones, low for near-flat/near-optimal) |
+| Initialisation Strategy | Seed with Week 2 best points; add exploratory points in high-variance regions; feature-guided sampling |
+| Budget Allocation | 1 submission per function + extra exploratory points for high-residual functions |
+| Constraints | Respect bounds; avoid overfitting; limited duplicate sampling |
 
 ---
 
@@ -38,429 +38,198 @@ If assumptions A hold, then a **heteroskedastic Gaussian Process (or GP+RF ensem
 
 ---
 
-# f1 — “Flat-Surface Verification Strategy”
+## f1 — Flat-Surface Verification Strategy
 
-## Observations
+### Observations
+- Function is nearly constant around 0  
+- GP mean ≈ 0, variance extremely low  
+- No structure detected  
 
-- EDA and previous queries show **f1 is nearly flat around 0** with extremely low variance.
-- GP predictions show tiny σ and μ ≈ 0 everywhere.
-- No meaningful structure detected.
+### Objective
+Confirm flatness and ensure no hidden structure exists.
 
-## Objective
+### Assumptions
+- Function is constant or extremely smooth  
+- No meaningful feature influence  
 
-- Confirm flatness and avoid wasting queries on exploitation.
-- Ensure no hidden peaks exist in interior regions.
+### Hypothesis
+- If true → values remain near 0  
+- If false → deviation reveals hidden structure  
 
-## Assumptions
-
-- f1 is essentially constant or extremely smooth.
-- No single dimension meaningfully influences the output.
-
-## Hypothesis
-
-- **If true:** new samples will also return values near 0, GP variance will shrink further.
-- **If false:** a rare interior point will show deviation, revealing hidden structure.
-
-## ML Method + Rationale
-
-**Low-β GP-UCB with randomised interior sampling.**
-
-- Rationale: GP is stable on flat functions; low β avoids chasing meaningless uncertainty.
+### Method
+Low-β GP-UCB with random interior sampling  
+→ Avoids wasting queries on meaningless exploitation  
 
 ---
 
-# f2 — “Local Basin Exploitation Strategy”
+## f2 — Local Basin Exploitation Strategy
 
-## Observations
+### Observations
+- Slight upward trend in higher X1 regions  
+- GP suggests shallow basin  
 
-- Prior rounds show a mild upward trend in regions with higher X1.
-- GP mean shows a shallow basin; uncertainty is moderate but structured.
+### Objective
+Exploit and validate the basin.
 
-## Objective
+### Assumptions
+- X1 is relevant  
+- Surface is smooth and unimodal  
 
-- Exploit the region where the GP predicts slightly higher values.
-- Validate whether the basin is real or an artefact of sparse sampling.
+### Hypothesis
+- If true → consistent improvement near high X1  
+- If false → basin collapses  
 
-## Assumptions
-
-- X1 is a relevant feature.
-- The surface is smooth and unimodal in that region.
-
-## Hypothesis
-
-- **If true:** sampling near high-X1 interior points yields consistently higher values.
-- **If false:** new samples flatten the basin, revealing GP overfitting.
-
-## ML Method + Rationale
-
-**GP-UCB with moderate β, slight feature emphasis on X1.**
-
-- Rationale: balances exploitation with enough uncertainty sampling to confirm the basin.
+### Method
+Moderate-β GP-UCB with X1 emphasis  
 
 ---
 
-# f3 — “Uncertainty-Driven Exploration Strategy”
+## f3 — Uncertainty-Driven Exploration Strategy
 
-## Observations
+### Observations
+- High uncertainty  
+- Unstable GP hyperparameters  
 
-- High posterior uncertainty across multiple dimensions.
-- GP hyperparameters unstable → suggests under-sampling or multimodality.
+### Objective
+Reduce uncertainty and stabilise model.
 
-## Objective
+### Assumptions
+- Structure exists but is under-sampled  
 
-- Reduce uncertainty by sampling diverse interior points.
-- Stabilise GP length-scales.
+### Hypothesis
+- If true → uncertainty decreases  
+- If false → noise dominates  
 
-## Assumptions
-
-- The function has structure but is poorly mapped.
-- Exploration is more valuable than exploitation.
-
-## Hypothesis
-
-- **If true:** new samples reduce σ significantly and reveal clearer trends.
-- **If false:** σ remains high, indicating noise or extreme flatness.
-
-## ML Method + Rationale
-
-**High-β GP-UCB with space-filling candidate generation.**
-
-- Rationale: exploration is essential when the model is unstable.
+### Method
+High-β GP-UCB with space-filling sampling  
 
 ---
 
-# f4 — “Local Refinement Strategy”
+## f4 — Local Refinement Strategy
 
-## Observations
+### Observations
+- Moderately stable region identified  
 
-- Prior queries show a region with moderately good performance.
-- GP mean is more stable than f3; uncertainty is lower.
+### Objective
+Refine and confirm local optimum.
 
-## Objective
+### Assumptions
+- Smooth surface  
+- Single dominant region  
 
-- Refine the local region to determine whether it contains a true optimum.
-- Avoid drifting to edges.
+### Hypothesis
+- If true → improvement or confirmation  
+- If false → performance drops  
 
-## Assumptions
-
-- The function is moderately smooth with a single dominant region of interest.
-
-## Hypothesis
-
-- **If true:** new samples near the region improve or confirm the local optimum.
-- **If false:** performance drops, indicating the GP overestimated the region.
-
-## ML Method + Rationale
-
-**Low-to-moderate β GP-UCB with soft edge penalty.**
-
-- Rationale: controlled exploitation while avoiding boundary artefacts.
+### Method
+Low-to-moderate β GP-UCB with edge penalty  
 
 ---
 
-# f5 — Log-Stabilised GP with Expected Improvement (4D Extension)
+## f5 — Log-Stabilised GP with Expected Improvement (4D)
 
-## Strategy Name  
-Log-Stabilised Homoskedastic Gaussian Process with Expected Improvement and Multi-Start Optimisation (4D)
+### Observations
+- Smooth structure  
+- Large output magnitude  
+- Strong gradients  
 
----
+### Objective
+Test EI stability under 4D extension.
 
-## Observations  
+### Assumptions
+- Smooth and well-behaved function  
+- Log transform stabilises variance  
 
-- f5 converged quickly in lower dimensions → indicates a strong global structure.  
-- Outputs are large in magnitude → risk of numerical instability in GP fitting.  
-- The function exhibits smooth behaviour.  
-- Improvement gradients are present and exploitable.  
-- Moving from lower dimensions to 4D increases acquisition multi-modality.  
+### Hypothesis
+- If true → stable convergence  
+- If false → instability or poor EI performance  
 
----
-
-## Objective of This Submission  
-
-To test whether Expected Improvement (EI) remains stable and effective when f5 is extended to 4D, and whether the log-transformed GP surrogate continues to model the function reliably under increased dimensionality.
-
-**One objective only.**
-
----
-
-## Assumptions About the Function  
-
-- The function is smooth and globally structured.  
-- Output scale is large but stabilisable via log transformation.  
-- Noise is approximately homoskedastic after transformation.  
-- Improvement gradients exist and EI can exploit them.  
-- The function remains well-behaved when extended to 4D.  
+### Method
+- GP (Matérn 2.5)  
+- Log transform  
+- Expected Improvement  
+- Multi-start optimisation  
 
 ---
 
-## Hypothesis  
+## f6 — Moderate-Exploration UCB with Robust GP
 
-A log-transformed GP surrogate combined with Expected Improvement will remain numerically stable and will continue to identify meaningful improvement directions in 4D, converging efficiently despite increased dimensionality.
+### Observations
+- Conflicting monotonic relationships  
+- Large residuals  
 
-- **If the hypothesis holds:**  
-  - Stable GP hyperparameters.  
-  - Consistent EI-driven improvement.  
-  - Smooth convergence toward a strong maximum.  
-  - No numerical instability from large outputs.  
+### Objective
+Test uncertainty calibration under structural conflict.
 
-- **If the hypothesis fails:**  
-  - GP instability or poorly conditioned covariance matrices.  
-  - EI becoming overly exploitative or ineffective.  
-  - Slower convergence due to dimensionality-induced multi-modality.  
-  - Evidence that exploration-heavy acquisition (e.g., UCB) would have been preferable.  
+### Assumptions
+- Mixed monotonic structure  
+- Smooth but complex interactions  
 
----
+### Hypothesis
+- If true → UCB explores meaningful ambiguous regions  
+- If false → exploration is misdirected  
 
-## ML Method and Rationale  
-
-### Gaussian Process (Matérn 2.5 Kernel)  
-Captures smooth-but-not-perfectly-smooth behaviour while allowing moderate curvature flexibility.
-
-### Log Transform  
-Compresses large output magnitudes, reduces effective heteroskedasticity, and improves numerical conditioning of the GP.
-
-### Expected Improvement (EI)  
-Well-suited for functions with a strong global trend; efficiently balances exploration and exploitation when improvement gradients exist.
-
-### Multi-Start Optimisation  
-EI becomes multi-modal in 4D. Multiple restarts reduce the risk of acquisition optimisation getting trapped in local optima.
-
+### Method
+Moderate-β GP-UCB with heteroskedastic robustness  
 
 ---
 
-# f6 — Moderate-Exploration UCB with Heteroskedastic-Robust GP (5D)
+## f7 — GP + RF Ensemble-UCB (Weak Structure)
 
-## Strategy Name  
-Moderate-Exploration UCB with a Heteroskedastic-Robust Gaussian Process
+### Observations
+- Weak/non-smooth structure  
+- GP alone insufficient  
 
----
+### Objective
+Test if model disagreement identifies improvements.
 
-## Observations  
+### Assumptions
+- GP captures global trend  
+- RF captures local irregularities  
 
-- f6 exhibits opposing monotonic directions (e.g., \( X_4 \uparrow \) increases f6, while \( X_5 \uparrow \) decreases f6).  
-- The GP previously misestimated the surface (large residual ≈ −298%).  
-- The surface appears smooth but structurally conflicting.  
-- Ambiguous regions exist where monotonic trends break down.  
-- Expected Improvement (EI) would likely collapse prematurely toward misleading local structure.  
+### Hypothesis
+- If true → disagreement correlates with improvement  
+- If false → behaves like noise  
 
----
-
-## Objective of This Submission  
-
-Test whether GP-estimated uncertainty is correctly calibrated in 5D when monotonic trends conflict, by using moderate-β UCB to explore under-sampled and structurally ambiguous regions.
-
-**One objective only.**
-
-This is a falsifiable experiment:
-
-- If uncertainty is meaningful → UCB explores the correct ambiguous regions.  
-- If uncertainty is miscalibrated → UCB explores irrelevant regions.
-
----
-
-## Assumptions About the Function  
-
-- f6 has mixed monotonic structure (some inputs positively associated, others negatively associated).  
-- The function remains smooth enough for a Matérn GP.  
-- Noise behaves approximately heteroskedastically; added jitter improves robustness.  
-- Sample size is small, so uncertainty estimation materially affects decisions.  
-- EI would collapse early due to misleading local monotonic structure.  
-
----
-
-## Hypothesis  
-
-A moderately exploratory UCB-GP will correctly identify regions where monotonic assumptions break down, improving uncertainty calibration and guiding sampling toward the true maxima.
-
-### If the Hypothesis Holds  
-
-- UCB explores the correct ambiguous regions.  
-- Predictive residuals shrink.  
-- The GP reconciles opposing monotonic trends.  
-- Posterior uncertainty becomes better aligned with true model error.  
-
-### If the Hypothesis Fails  
-
-- UCB explores structurally irrelevant areas.  
-- Residuals remain large.  
-- The GP fails to reconcile monotonic conflicts.  
-- Uncertainty estimates remain poorly calibrated.  
-
----
-
-## ML Method and Rationale  
-
-### Matérn Gaussian Process (Heteroskedastic-Robust)  
-Models smooth but interaction-heavy behaviour.  
-Additional jitter improves numerical stability under heteroskedastic noise patterns.
-
-### Moderate-β Upper Confidence Bound (UCB)  
-Encourages structured exploration without excessive wandering.  
-Specifically targets regions of high predictive uncertainty where monotonic assumptions may break down.
-
----
-
-# f7 — GP + RF Ensemble-UCB (Weakly Structured 7D)
-
-## Strategy Name  
-Ensemble-UCB with Gaussian Process + Random Forest Disagreement
-
----
-
-## Observations  
-
-- The problem appears weakly structured and potentially non-smooth.  
-- A single smooth surrogate (GP) risks missing local irregularities.  
-- Residual structure suggests possible model misspecification under a smooth prior.  
-- Small-sample regime → uncertainty estimation materially affects decisions.  
-- 7D increases structural complexity and interaction effects.  
-
----
-
-## Objective of This Submission  
-
-Test whether GP–RF disagreement reliably identifies regions containing missed global maxima in weakly structured 7D functions.
-
-**One objective only.**
-
----
-
-## Assumptions About the Function  
-
-- The function is weakly structured with latent local interactions.  
-- A smooth GP captures global trends but may miss local non-smooth behaviour.  
-- A Random Forest can capture local, non-smooth interactions.  
-- Sample size is limited, so both uncertainty and model disagreement influence acquisition.  
-- RF ensemble variance is a useful proxy for local model instability or misspecification.  
-- Simple averaging of GP and RF predictions is a reasonable first-order ensemble strategy.  
-
----
-
-## Hypothesis  
-
-Regions where the GP and RF disagree (high disagreement) are more likely to contain missed improvements. Targeting these regions using ensemble-UCB will outperform GP-only Bayesian Optimisation in Week-3.
-
-### If the Hypothesis Holds  
-
-- High GP–RF disagreement correlates with realised improvements.  
-- Ensemble-UCB samples structurally informative regions.  
-- New maxima exceed GP-only performance.  
-- Disagreement reduces as the ensemble refines the surface.  
-
-### If the Hypothesis Fails  
-
-- Disagreement does not correlate with realised improvement.  
-- Ensemble-UCB explores regions that do not yield superior maxima.  
-- GP-only BO performs equally well or better.  
-- Disagreement behaves like noise rather than a structural signal.  
-
----
-
-## ML Method and Rationale  
-
-### Gaussian Process (Matérn Kernel, Normalised Targets)  
-Captures smooth global structure and provides calibrated predictive uncertainty.
-
-### Random Forest Ensemble (Raw Targets)  
-Captures local, non-smooth interactions and provides an independent mean and variance signal.
-
-### Acquisition: Ensemble-UCB  
-Combines:
-- Ensemble mean  
-- GP predictive uncertainty  
+### Method
+Ensemble-UCB combining:
+- GP mean + uncertainty  
+- RF predictions  
 - GP–RF disagreement  
 
-### Rationale  
+---
 
-- GP uncertainty drives principled exploration.  
-- RF disagreement highlights potential smooth-surrogate misspecification.  
-- Combining both focuses sampling on regions that are uncertain *and* structurally ambiguous.  
+## f8 — Feature-Guided GP-UCB with Edge Penalty (8D)
 
-This directly tests whether model disagreement is a reliable signal for missed maxima in a small-sample, weakly structured 7D regime.
+### Observations
+- High dimensionality  
+- Boundary bias observed  
 
+### Objective
+Improve stability and reduce boundary artefacts.
+
+### Assumptions
+- Smooth function  
+- Interior optima more likely  
+
+### Hypothesis
+- If true → interior sampling improves stability  
+- If false → edge optima suppressed  
+
+### Method
+- GP (Matérn 2.5)  
+- Moderate β UCB  
+- Feature-weighted uncertainty  
+- Soft edge penalty  
+- Multi-start optimisation  
 
 ---
 
-# f8 — Feature-Guided GP-UCB with Soft Edge Penalty (8D)
+## Final Insight
+Week 3 is not about maximisation alone — it is a **controlled experimental phase** to validate:
 
-## Strategy Name  
-Feature-Guided Gaussian Process UCB with Soft Edge Penalty
+- Whether uncertainty is meaningful  
+- Whether feature signals are actionable  
+- Whether surrogate assumptions hold  
 
----
-
-## Observations  
-
-- The problem operates in high dimension (8D), increasing acquisition multi-modality and optimisation instability.  
-- Previous runs frequently returned boundary solutions (0 or 1), suggesting edge-seeking behaviour from the acquisition.  
-- The objective appears smooth enough for a GP but structurally complex across dimensions.  
-- Week-3 priority is controlled exploitation rather than aggressive global exploration.  
-- Some features are believed to be more influential (e.g., X1, X3), motivating feature-guided uncertainty weighting.  
-
----
-
-## Objective of This Submission  
-
-Test whether a feature-guided UCB acquisition with a soft interior bias improves sampling stability in 8D by:
-
-- Encouraging exploitation of model-informed regions,  
-- Reducing unjustified boundary solutions, and  
-- Maintaining calibrated uncertainty-driven search.
-
-**One objective only.**
-
----
-
-## Assumptions About the Function  
-
-- The function is sufficiently smooth for a Matérn 2.5 Gaussian Process.  
-- The signal-to-noise ratio allows meaningful uncertainty estimation.  
-- Certain input dimensions contribute more strongly to variation.  
-- Boundary optima are not systematically dominant (i.e., edges are not inherently optimal).  
-- Moderate exploration (β ≈ 0.6) is sufficient in Week-3.  
-
----
-
-## Hypothesis  
-
-A feature-guided GP-UCB with a soft edge penalty will:
-
-- Focus sampling in structurally informative interior regions,  
-- Reduce artificial boundary attraction, and  
-- Improve stability of convergence in 8D.
-
-### If the Hypothesis Holds  
-
-- Proposed points concentrate in meaningful interior regions.  
-- UCB remains stable without oscillatory boundary jumps.  
-- Residual error decreases steadily.  
-- Feature-weighting enhances sensitivity along influential dimensions.  
-
-### If the Hypothesis Fails  
-
-- Acquisition still collapses to boundaries despite penalty.  
-- Interior bias suppresses valid edge optima.  
-- Feature-weighting does not meaningfully influence sampling.  
-- Convergence stagnates or becomes erratic.  
-
----
-
-## ML Method and Rationale  
-
-### Gaussian Process (Matérn 2.5 Kernel)  
-Models smooth but moderately flexible structure.  
-Provides predictive mean and uncertainty necessary for UCB.
-
-### Upper Confidence Bound (Moderate β)  
-UCB = μ + βσ  
-Balances exploitation and exploration, aligned with Week-3 objectives.
-
-### Feature-Guided Uncertainty Scaling  
-Per-dimension feature weights are aggregated into a scalar multiplier applied to the uncertainty term.  
-Rationale: Emphasise uncertainty in dimensions believed to matter most without introducing directional instability.
-
-### Soft Edge Penalty  
-A smooth exponential decay penalty applied near domain boundaries.  
-Rationale: Discourages boundary solutions unless strongly justified by GP predictions, preventing artificial edge bias.
-
-### Multi-Start Optimisation  
-Multiple L-BFGS-B restarts reduce risk of local acquisition traps in 8D.
+Every function strategy is designed to **test a specific structural hypothesis**, not just optimise blindly.
