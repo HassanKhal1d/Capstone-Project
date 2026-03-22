@@ -28,7 +28,7 @@ This document outlines the Week 4 submission plan, integrating **SVM, KNN, and G
 ---
 
 ## Strategy Name
-**Minimal Surrogate Comparison Study**
+**f1 - Minimal Surrogate Comparison Study**
 
 
 ## Objective of This Submission
