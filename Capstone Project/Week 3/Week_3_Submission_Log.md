@@ -1,20 +1,33 @@
 # Week 3 – Feature-Guided, Uncertainty-Aware Exploration Submission
 
 ## Objective of This Submission
-Test whether **feature-guided, uncertainty-aware sampling** identifies regions of the search space that improve best-observed values for each function (f1–f8), thereby validating or falsifying assumptions about **feature importance, surrogate smoothness, and uncertainty estimates**.  
-**Single objective only:** belief revision about the function landscape for each function using controlled experimentation.
+
+Test whether **feature-guided, uncertainty-aware sampling** identifies regions of the search space that improve best-observed values for each function (f1–f8), thereby validating or falsifying assumptions about:
+
+- Feature importance  
+- Surrogate smoothness  
+- Uncertainty estimates  
+
+**Single objective:** belief revision about the function landscape for each function using controlled experimentation.
 
 ---
 
 ## Key Assumptions (Max 3)
-1. **Surrogate Smoothness:** The surrogate can generalize locally around observed points; predicted trends approximate true function behaviour.  
-2. **Uncertainty Calibration:** Predicted variance from the surrogate accurately reflects regions of high risk or high potential improvement.  
-3. **Feature Relevance:** Inputs identified as strong predictors via partial correlation, Spearman, or mutual information reliably indicate directions for effective exploitation.  
+
+1. **Surrogate Smoothness**  
+   The surrogate can generalise locally around observed points; predicted trends approximate true function behaviour.
+
+2. **Uncertainty Calibration**  
+   Predicted variance from the surrogate accurately reflects regions of high risk or high potential improvement.
+
+3. **Feature Relevance**  
+   Inputs identified as strong predictors via partial correlation, Spearman, or mutual information reliably indicate directions for effective exploitation.
 
 ---
 
 ## Hypothesis (Directional)
-If assumptions hold, then a **heteroskedastic Gaussian Process (or GP+RF ensemble for weak/complex functions) with UCB acquisition**, combined with **feature-informed sampling**, will outperform the Week 2 baseline in maximising best value per function for f1–f8, while providing structural insight into feature effects.
+
+If assumptions hold, then a **heteroskedastic Gaussian Process (or GP + RF ensemble for weak/complex functions) with UCB acquisition**, combined with **feature-informed sampling**, will outperform the Week 2 baseline in maximising best value per function (f1–f8), while providing structural insight into feature effects.
 
 - **Baseline (B):** Week 2 best-observed values  
 - **Metric (X):** Best value per function  
@@ -26,11 +39,11 @@ If assumptions hold, then a **heteroskedastic Gaussian Process (or GP+RF ensembl
 
 | Component | Strategy |
 |----------|---------|
-| Surrogate Model | Heteroskedastic GP; GP+RF ensemble for weak/complex functions (f3, f7) |
-| Acquisition Function | UCB with function-specific β (high for uncertain functions, moderate for structured ones, low for near-flat/near-optimal) |
-| Initialisation Strategy | Seed with Week 2 best points; add exploratory points in high-variance regions; feature-guided sampling |
-| Budget Allocation | 1 submission per function + extra exploratory points for high-residual functions |
-| Constraints | Respect bounds; avoid overfitting; limited duplicate sampling |
+| **Surrogate Model** | Heteroskedastic GP; GP + RF ensemble for weak-signal functions (f3, f7) |
+| **Acquisition Function** | UCB with function-specific β |
+| **Initialisation Strategy** | Seed with Week 2 best points + feature-guided exploratory points |
+| **Budget Allocation** | 1 submission per function (8 total) + 2 extra exploratory points (f2/f4/f7) |
+| **Constraints** | Respect bounds; avoid overfitting; allow duplication only for local exploitation |
 
 ---
 
@@ -41,46 +54,45 @@ If assumptions hold, then a **heteroskedastic Gaussian Process (or GP+RF ensembl
 ## f1 — Flat-Surface Verification Strategy
 
 ### Observations
-- Function is nearly constant around 0  
-- GP mean ≈ 0, variance extremely low  
-- No structure detected  
+- Near-zero variance across all observations  
+- GP predicts μ ≈ 0 and σ ≈ 0 globally  
+- No detectable structure  
 
 ### Objective
-Confirm flatness and ensure no hidden structure exists.
+Confirm flatness and rule out hidden interior peaks.
 
 ### Assumptions
-- Function is constant or extremely smooth  
-- No meaningful feature influence  
+- Function is effectively constant  
+- No dimension is influential  
 
 ### Hypothesis
-- If true → values remain near 0  
-- If false → deviation reveals hidden structure  
+- **If true:** new samples remain ≈ 0  
+- **If false:** rare deviations reveal hidden structure  
 
 ### Method
-Low-β GP-UCB with random interior sampling  
-→ Avoids wasting queries on meaningless exploitation  
+Low-β GP-UCB with random interior sampling.
 
 ---
 
 ## f2 — Local Basin Exploitation Strategy
 
 ### Observations
-- Slight upward trend in higher X1 regions  
+- Mild upward trend in high-X1 regions  
 - GP suggests shallow basin  
 
 ### Objective
-Exploit and validate the basin.
+Exploit and validate basin structure.
 
 ### Assumptions
 - X1 is relevant  
-- Surface is smooth and unimodal  
+- Surface is smooth and locally unimodal  
 
 ### Hypothesis
-- If true → consistent improvement near high X1  
-- If false → basin collapses  
+- **If true:** consistent improvement near high-X1  
+- **If false:** basin collapses  
 
 ### Method
-Moderate-β GP-UCB with X1 emphasis  
+Moderate-β GP-UCB with X1 emphasis.
 
 ---
 
@@ -91,130 +103,140 @@ Moderate-β GP-UCB with X1 emphasis
 - Unstable GP hyperparameters  
 
 ### Objective
-Reduce uncertainty and stabilise model.
+Reduce uncertainty and stabilise surrogate.
 
 ### Assumptions
 - Structure exists but is under-sampled  
 
 ### Hypothesis
-- If true → uncertainty decreases  
-- If false → noise dominates  
+- **If true:** σ decreases and structure emerges  
+- **If false:** σ remains high  
 
 ### Method
-High-β GP-UCB with space-filling sampling  
+High-β GP-UCB with space-filling sampling.
 
 ---
 
 ## f4 — Local Refinement Strategy
 
 ### Observations
-- Moderately stable region identified  
+- Moderately strong local region  
+- Stable GP predictions  
 
 ### Objective
-Refine and confirm local optimum.
+Refine local optimum.
 
 ### Assumptions
-- Smooth surface  
-- Single dominant region  
+- Smooth function with dominant region  
 
 ### Hypothesis
-- If true → improvement or confirmation  
-- If false → performance drops  
+- **If true:** improvement near region  
+- **If false:** GP overfit exposed  
 
 ### Method
-Low-to-moderate β GP-UCB with edge penalty  
+Low–moderate β GP-UCB with soft edge penalty.
 
 ---
 
 ## f5 — Log-Stabilised GP with Expected Improvement (4D)
 
+### Strategy Name
+Log-Stabilised GP + EI with Multi-Start Optimisation
+
 ### Observations
-- Smooth structure  
-- Large output magnitude  
-- Strong gradients  
+- Strong global structure  
+- Large output magnitudes  
+- Smooth behaviour  
 
 ### Objective
 Test EI stability under 4D extension.
 
 ### Assumptions
-- Smooth and well-behaved function  
-- Log transform stabilises variance  
+- Smooth, log-stabilised outputs  
+- EI can exploit gradients  
 
 ### Hypothesis
-- If true → stable convergence  
-- If false → instability or poor EI performance  
+- **If true:** stable convergence  
+- **If false:** EI failure or instability  
 
 ### Method
-- GP (Matérn 2.5)  
+- Matérn 2.5 GP  
 - Log transform  
-- Expected Improvement  
+- EI acquisition  
 - Multi-start optimisation  
 
 ---
 
-## f6 — Moderate-Exploration UCB with Robust GP
+## f6 — Moderate-Exploration UCB with Robust GP (5D)
 
 ### Observations
 - Conflicting monotonic relationships  
-- Large residuals  
+- Large GP residuals  
+- Ambiguous regions  
 
 ### Objective
 Test uncertainty calibration under structural conflict.
 
 ### Assumptions
 - Mixed monotonic structure  
-- Smooth but complex interactions  
+- GP remains valid  
 
 ### Hypothesis
-- If true → UCB explores meaningful ambiguous regions  
-- If false → exploration is misdirected  
+- **If true:** UCB explores meaningful ambiguity  
+- **If false:** exploration is misdirected  
 
 ### Method
-Moderate-β GP-UCB with heteroskedastic robustness  
+Moderate-β UCB with heteroskedastic-robust GP.
 
 ---
 
-## f7 — GP + RF Ensemble-UCB (Weak Structure)
+## f7 — GP + RF Ensemble-UCB (7D)
+
+### Strategy Name
+Ensemble-UCB with GP–RF Disagreement
 
 ### Observations
-- Weak/non-smooth structure  
+- Weak structure  
+- Potential non-smoothness  
 - GP alone insufficient  
 
 ### Objective
-Test if model disagreement identifies improvements.
+Test whether model disagreement identifies missed maxima.
 
 ### Assumptions
-- GP captures global trend  
-- RF captures local irregularities  
+- RF captures local effects  
+- GP captures global structure  
 
 ### Hypothesis
-- If true → disagreement correlates with improvement  
-- If false → behaves like noise  
+- **If true:** disagreement → improvement  
+- **If false:** disagreement = noise  
 
 ### Method
-Ensemble-UCB combining:
-- GP mean + uncertainty  
-- RF predictions  
-- GP–RF disagreement  
+- GP + RF ensemble  
+- Acquisition = mean + uncertainty + disagreement  
 
 ---
 
-## f8 — Feature-Guided GP-UCB with Edge Penalty (8D)
+## f8 — Feature-Guided GP-UCB with Soft Edge Penalty (8D)
+
+### Strategy Name
+Feature-Guided GP-UCB with Interior Bias
 
 ### Observations
-- High dimensionality  
+- High dimensional (8D)  
 - Boundary bias observed  
+- Some features more influential  
 
 ### Objective
-Improve stability and reduce boundary artefacts.
+Improve stability and reduce boundary attraction.
 
 ### Assumptions
-- Smooth function  
-- Interior optima more likely  
+- Smooth structure  
+- Interior contains meaningful optima  
 
 ### Hypothesis
-- If true → interior sampling improves stability  
-- If false → edge optima suppressed  
+- **If true:** stable interior convergence  
+- **If false:** boundary collapse persists  
 
 ### Method
 - GP (Matérn 2.5)  
@@ -224,12 +246,3 @@ Improve stability and reduce boundary artefacts.
 - Multi-start optimisation  
 
 ---
-
-## Final Insight
-Week 3 is not about maximisation alone — it is a **controlled experimental phase** to validate:
-
-- Whether uncertainty is meaningful  
-- Whether feature signals are actionable  
-- Whether surrogate assumptions hold  
-
-Every function strategy is designed to **test a specific structural hypothesis**, not just optimise blindly.
