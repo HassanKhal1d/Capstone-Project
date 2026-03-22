@@ -190,7 +190,6 @@ Test whether an **SVM with an RBF kernel** can capture the **X1 monotonic trend*
 
 This strategy evaluates whether **structural bias (SVM)** combined with **probabilistic modelling (GP)** and **local correction (KNN)** yields more reliable optimisation than any single surrogate alone.
 
-
 ---
 
 # Strategy Name  
@@ -243,16 +242,7 @@ GP posterior variance alone can be miscalibrated under noise; CV error reflects 
 
 ### 4. Ensemble Lower Confidence Bound (LCB)
 
-For each candidate point \( x \):
-
-\[
-LCB(x) =
-\frac{1}{2}
-\Big[
-(\mu_{GP} - \sigma_{GP,cv}) +
-(\mu_{KNN} - \sigma_{KNN,cv})
-\Big]
-\]
+LCB(x) = 0.5 * (mu_GP(x) - sigma_GP_cv(x) + mu_KNN(x) - sigma_KNN_cv(x))
 
 We **maximize this LCB** because:
 
@@ -380,9 +370,6 @@ These geometric constraints help TURBO **avoid exploring known-poor areas**.
 - TURBO remains within **promising regions**
 - **GP CV-MSE** inside the trust region is **low**
 - **Expected Improvement** finds meaningful gains
-- Target metrics achieved:
-- **|Z| < 1.5**
-- **Gap < 0.35**
 
 
 ### If the Hypothesis Breaks
@@ -421,9 +408,7 @@ Evaluate whether an **SVM trained on log-transformed targets** can match the per
 ## ML Method & Rationale
 
 ### 1. Log-Transform the Targets
-\[
-y' = \log(y + 1)
-\]
+y' = log(y + 1)
 
 **Why?**
 
@@ -445,9 +430,7 @@ y' = \log(y + 1)
 - Compute **CV-MSE** for both models
 - Compute **ensemble weights** using inverse CV-MSE:
 
-\[
-w_i = \frac{1 / \text{MSE}_i}{\sum_j 1 / \text{MSE}_j}
-\]
+w_i = (1 / MSE_i) / sum_j (1 / MSE_j)
 
 **Purpose:**
 
@@ -468,9 +451,7 @@ For each candidate:
 2. Compute **CV-based prediction intervals**
 3. Compute **CV-Lower-Bound (CV-LCB)**:
 
-\[
-LCB(x) = \mu_\text{ens}(x) - \sigma_\text{CV}(x)
-\]
+LCB(x) = mu_ens(x) - sigma_CV(x)
 
 - Select the candidate with **highest LCB**
 
@@ -482,7 +463,7 @@ LCB(x) = \mu_\text{ens}(x) - \sigma_\text{CV}(x)
 
 ## Key Assumptions
 
-- **Log-GP** is well-calibrated (supported by Week 3 metrics)
+- **Log-GP** is well-calibrated 
 - **Log-SVR** can capture similar structure
 - **CV-MSE** is a reliable **model-quality indicator**
 - **Batch EI** increases candidate diversity
@@ -540,15 +521,11 @@ improves **calibration and local prediction quality** compared to working direct
 - Assumes f6 depends only on **2 effective dimensions** (MI analysis: X4/X5 active)  
 - Generate a **random linear map**:
 
-\[
-A : \mathbb{R}^2 \to \mathbb{R}^5, \quad x = A z
-\]
+A is a function from R² to R⁵, defined by x = A * z.
 
 - To embed existing 5D points into 2D:
 
-\[
-z = A^+ x
-\]
+z = A⁺ * x
 
 - **Why?**
   - If the function truly lives in a 2D subspace, modelling there is:
@@ -571,13 +548,9 @@ z = A^+ x
 
 - Construct **2D ensemble**:
 
-\[
-\text{weights} = \text{inverse CV-MSE} \quad (\text{better model → higher weight})
-\]
+weights_i = 1 / CV-MSE_i (for each model i)
 
-\[
-\mu_\text{ens} = \text{weighted average of GP-2D and KNN-2D means}
-\]
+μ_ens = (weights_GP * μ_GP + weights_KNN * μ_KNN) / (weights_GP + weights_KNN)
 
 **Why?**
 
@@ -594,18 +567,14 @@ z = A^+ x
   - Ensemble mean \( \mu_\text{ens}(z) \) from GP + KNN  
   - Define **Upper Confidence Bound (UCB)**:
 
-\[
-\text{UCB}(z) = \mu_\text{ens}(z) + \beta \sigma(z), \quad \beta = 1.0
-\]
+UCB(z) = μ_ens(z) + β * σ(z), where β = 1.0
 
 - Search over many random 2D candidates → pick **highest UCB**  
 - Map back to 5D:
 
-\[
-x_\text{next} = A z_\text{best}
-\]
+x_next = A * z_best
 
-- Clip \( x_\text{next} \) into \([0,1]^5\)
+x_next = clip(x_next, 0, 1)
 
 **Why UCB?**
 
@@ -692,9 +661,7 @@ Week 3 showed no single model is reliable on f7 → maximize model diversity to 
 
 - Define ensemble weights:
 
-\[
-w_i = \frac{1}{\text{MSE}_i + \lambda \cdot \text{Var}_i}, \quad \lambda = 0.5
-\]
+w_i = 1 / (MSE_i + λ * Var_i), where λ = 0.5
 
 - Normalize weights to sum to 1
 
@@ -708,15 +675,11 @@ w_i = \frac{1}{\text{MSE}_i + \lambda \cdot \text{Var}_i}, \quad \lambda = 0.5
 - **Ensemble mean** = weighted average of 4 models’ predictions  
 - **Ensemble variance**:
 
-\[
-\text{Var}_\text{budget} = 3.0 \times \max(\sigma_\text{GP}, \sigma_\text{KNN,local})
-\]
+Var_budget = 3.0 * max(σ_GP, σ_KNN_local)
 
 - Acquisition function:
 
-\[
-\text{Acq}(x) = \mu_\text{ens}(x) + 1.5 \cdot \text{Var}_\text{budget}(x)
-\]
+Acq(x) = μ_ens(x) + 1.5 * Var_budget(x)
 
 **Rationale:**  
 - Avoid Week 3’s overconfidence  
