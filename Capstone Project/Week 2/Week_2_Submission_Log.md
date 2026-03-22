@@ -42,7 +42,7 @@ If assumptions 1–3 hold, then **UCB BO** will improve or maintain the **Best O
 ## Performance Metrics
 | Function | Predicted (UCB) | Actual (Week 2) | Residual Error | Percent Error |
 |----------|----------------|----------------|----------------|---------------|
-| f1       | 0.0212         | 9.07e-223      | 9.07e-223      | 0.00 %        |
+| f1       | 0.0212         | 9.07e-223      | 9.07e-223      |  Large        |
 | f2       | 1.8786         | -0.0798        | -1.9584        | -2453.24 %    |
 | f3       | 0.4030         | -0.205         | -0.6080        | -296.32 %     |
 | f4       | 24.8417        | -2.042         | -26.8837       | -1316.89 %    |
@@ -56,12 +56,6 @@ If assumptions 1–3 hold, then **UCB BO** will improve or maintain the **Best O
 - **f1, f2, f3, f4:** UCB BO did not improve Best Observed; likely underexploration in regions with extreme minima or steep gradients.  
 - **f6, f7:** Moderate improvement, indicating partial coverage of high-potential regions.  
 - UCB BO performance varies by function shape and scale, highlighting the need for adaptive hyperparameters or multiple iterations.
-
----
-
-## Pre-defined Decision Rule
-- Functions where Week 2 Best Observed matches or exceeds Week 1 Random indicate **successful exploratory coverage**.  
-- Functions with minimal improvement (residual >50% from optimum) will be prioritised for **adaptive β tuning and additional exploratory iterations** in Week 3.
 
 ---
 
@@ -84,8 +78,7 @@ If assumptions 1–3 hold, then **UCB BO** will improve or maintain the **Best O
 ---
 
 ### Summary
-- Week 2 establishes a **baseline UCB BO framework**, showing where exploratory coverage succeeds or fails.  
-- Best Observed results indicate **functions f5 and f8 were fully explored**, while others need improved uncertainty handling.  
-- Next stage (Week 3) will incorporate **adaptive acquisition function parameters, increased sampling, and selective exploitation** to improve optimisation across all functions.
+- Week 2 establishes a **baseline UCB BO framework**, showing where exploratory coverage succeeds or fails. 
+- Next stage (Week 3) will incorporate bespoke strategies per function.
 
 
