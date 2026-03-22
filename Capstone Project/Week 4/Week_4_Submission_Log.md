@@ -65,10 +65,7 @@ This establishes a **baseline** for comparing model behaviour when the **true si
 
 
 ## Key Assumptions
-
-- **f1 is flat**, supported by Week-3 diagnostics:  
-  - **Negative Log Likelihood (NLL): −6.73**  
-  - **Z-score: 0.08**
+- f1 is flat
 - All surrogate models should predict **approximately zero everywhere**.
 - Any disagreement between models arises from **modelling artefacts**, not genuine structure.
 
@@ -319,11 +316,6 @@ Stabilise optimisation on **f4** by combining:
 - **SVM support-vector geometry** (to identify *safe / promising* regions)
 - **Variance-inflated ARD-GP** (to avoid overconfidence)
 
-This strategy directly addresses **Week-3 global GP miscalibration** (`Z = 2.17`) and aims to achieve:
-
-- **|Z| < 1.5**
-- **Calibration Gap < 0.35**
-
 
 ## ML Method & Rationale
 
@@ -425,7 +417,6 @@ This hybrid strategy aims to **replace unstable global optimisation** with a **c
 
 Evaluate whether an **SVM trained on log-transformed targets** can match the performance of a **log-GP**, and whether **cross-validated selection** from a batch of **EI-generated candidates** yields more reliable improvement than pure EI optimisation.
 
-This directly tests whether SVM adds value on a function where the GP was already **well-calibrated in Week 3**.
 
 ## ML Method & Rationale
 
@@ -443,7 +434,6 @@ y' = \log(y + 1)
 
 ### 2. Log-GP (Matérn 2.5 Kernel)
 - Smooth and flexible
-- **Well-calibrated in Week 3** (`Z = 0.46`, Gap = 0.18)
 - Provides **uncertainty estimates** required for Expected Improvement (EI)
 
 ### 3. Log-SVR (ε-SVR, RBF Kernel)
@@ -753,15 +743,13 @@ w_i = \frac{1}{\text{MSE}_i + \lambda \cdot \text{Var}_i}, \quad \lambda = 0.5
 ## Hypothesis
 
 ### If the Hypothesis Holds
-- **Ensemble CV-error < best single model CV-error**  
-- |Z| < 2.5 (avoiding catastrophic miscalibration)  
+- **Ensemble CV-error < best single model CV-error**   
 - Ensemble weights concentrate on **most stable models**  
 - Disagreement is **moderate in good regions**, high in unexplored regions
 
 ### If the Hypothesis Breaks
 - All models have **high CV-error and high CV-variance**  
 - Ensemble performs **no better than any single model**  
-- |Z| remains large → surface may be **near-pure noise or extremely complex**  
 - Conclusion: f7 is **beyond what these surrogates can handle**
 
 ## Summary Logic
@@ -877,7 +865,6 @@ This prevents coordinate descent from drifting into misleading or noisy regions.
 - ARD-GP length-scales for X1/X3 are smallest
 - Coordinate descent improves the best value
 - CV-LCB > current best → stable improvement
-- Calibration improves (Gap < 0.35)
 
 ### If the Hypothesis Fails
 
