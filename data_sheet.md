@@ -42,13 +42,13 @@ The dataset comprises eight independently sampled black-box function datasets (f
 ### Collection Process
 
 **How was the data acquired?**  
-QQueries were generated through a sequential Bayesian optimisation pipeline executed once per week per function. The core loop was: fit a surrogate model to all accumulated (x, y) pairs; optimise an acquisition function over [0,1]^d to select the next candidate; submit to the oracle; append the returned (x, y) pair to the dataset; update EDA. This loop ran for thirteen active weeks (Weeks 1 through 13), with Week 0 providing the initial oracle-supplied point for each function.
+Queries were generated through a sequential Bayesian optimzation pipeline executed once per week per function. The core loop was: fit a surrogate model to all accumulated (x, y) pairs; optimise an acquisition function over [0,1]^d to select the next candidate; submit to the oracle; append the returned (x, y) pair to the dataset; update EDA. This loop ran for thirteen active weeks (Weeks 1 through 13), with Week 0 providing the initial oracle-supplied point for each function.
 
 **Sampling Strategy**
 The sampling strategy was neither purely random nor fully deterministic; it was adaptive
 and hypothesis-driven, evolving materially across weeks in response to observed outcomes.
 Week 1 used uniform random sampling to establish a baseline. From Week 2 onward, candidate
-points were selected by optimising acquisition functions over surrogate models fitted to all
+points were selected by optimizing acquisition functions over surrogate models fitted to all
 accumulated observations. The primary acquisition functions employed were:
 
 - **Upper Confidence Bound (UCB)** — used throughout Weeks 2–8 as the default exploratory
@@ -103,32 +103,145 @@ Data were collected over fourteen discrete weeks (Week 0 through Week 13) during
 ### Preprocessing / Cleaning / Labelling
 
 **Was any preprocessing or labeling performed?**  
-Transformations were applied selectively and only when EDA provided statistical justification. No global preprocessing pipeline was applied uniformly. All transformations are pipeline steps applied at model-fitting time; raw (x, y) records are stored without modification.
-The most important and consistently validated transformation was a log-transform of f5's outputs, applied from Week 3 onward. f5's output range spans four orders of magnitude (685 to 4171), which makes GP fitting in the original scale unreliable. The log-transform stabilised the variance and enabled calibrated uncertainty estimates. The Week 4 reflection documented the consequences of getting this wrong: the log-GP + log-SVR ensemble used in Week 4 applied the log-transform incorrectly in combination with a CV-LCB selection criterion, producing the worst calibration result of the entire competition (NLL=19.66, z=−6.30, CI FAIL, quantile=0.000 — the truth fell entirely outside the predictive distribution). This was described in the Week 4 reflection as the most dangerous failure mode, because log-space calibration errors are amplified exponentially on back-transformation.
-A Yeo-Johnson input warp on X1 was tested for f2 in Week 5. The hypothesis was that X1 had a non-linear monotonic relationship with f2's outputs. The test falsified this: the warp worsened calibration (quantile moved from 0.947 to 0.978) because EDA confirmed the relationship was moderately linear (Pearson r=0.424, Spearman ρ=0.361), so warping distorted the kernel distance metric without correcting any genuine non-stationarity. The warp was removed in Week 6.
-A Box-Cox output warp was applied to f3 in Week 6 to stabilise GP calibration on its weakly negative outputs, with the condition that it would be retained only if the calibration gap stayed below 0.15. No other transformations were applied across the dataset.
+Transformations were applied selectively and only when EDA provided statistical
+justification. No global preprocessing pipeline was applied uniformly across functions.
+All transformations are pipeline steps applied at model-fitting time; raw (x, y) records
+are stored without modification.
+
+The most important and consistently validated transformation was a **log-transform of f5
+outputs**, applied from Week 3 onward. f5's output range spans four orders of magnitude
+(685 to 8343), making GP fitting in the original scale unreliable due to severe variance
+heterogeneity. The log-transform stabilised the variance and enabled reliable uncertainty
+estimates throughout the remaining weeks.
+
+For **f1**, a **Gaussian copula transform** was introduced in Week 9 to address the
+pathological output scale, where values ranged from effectively zero (10^-248) to the
+then-best observed value of approximately 10^-9. The copula transform maps outputs through
+their empirical rank to a standard normal distribution, preserving rank order while
+removing the extreme scale compression that caused GP uncertainty estimates to collapse.
+This transformation produced an immediate and substantial improvement: the Week 9
+submission returned y = 1.87 x 10^-9, a jump of approximately 400 million times over the
+previous best of 5.31 x 10^-15. As further high-value observations accumulated in the
+productive ridge and the dataset grew more concentrated near the peak, the copula
+transform was subsequently replaced by a direct **log10 transform** from Week 10 onward.
+The log10 transform was preferred at that stage because the productive observations were
+sufficiently dense to define stable local curvature, and a quadratic model fitted in
+log10 space could directly estimate the ridge peak, a calculation that is not meaningful
+in copula-transformed space where the scale carries no geometric interpretation.
+
+A **Yeo-Johnson input warp on X1** was tested for f2 in Week 5. The hypothesis was that
+X1 had a non-linear monotonic relationship with f2's outputs. The test falsified this: EDA
+confirmed the relationship was moderately linear (Pearson r = 0.424, Spearman rho = 0.361),
+meaning the warp distorted the kernel distance metric without correcting any genuine
+non-stationarity. The warp was removed in Week 6.
+
+A **Box-Cox output warp** was applied to f3 from Week 6 onward to stabilise GP fitting
+on its weakly negative outputs, with the condition that it would be retained only if
+surrogate performance remained stable. No other transformations were applied across the
+dataset.
 
 **What are the intended uses?**  
-The dataset is intended for educational and research use in surrogate-based optimisation, specifically for comparing GP, KRR, KNN, SVR, XGBoost, and ensemble methods as point estimators and uncertainty providers under small-sample sequential conditions; for investigating how GP posterior miscalibration manifests and how it can be diagnosed using NLL, z-score, calibration gap, and CI coverage as a coherent diagnostic battery; for active subspace detection using ARD length-scales, partial correlation, mutual information, and SVM-RFE on functions with confirmed sparse structure; and for studying the pre-commitment experimental design framework itself, where hypotheses and decision rules are specified before results are observed.
+The dataset is intended for educational and research use in surrogate-based optimization,
+specifically for:
 
+- **Comparing surrogate model families** — including Gaussian Processes, Kernel Ridge
+  Regression, k-Nearest Neighbours, Support Vector Regressors, XGBoost, and ensemble
+  combinations thereof — as point estimators and uncertainty providers under small-sample
+  sequential conditions
+- **Active subspace detection** — using ARD length-scales, partial correlation, mutual
+  information, and SVM-RFE on functions with confirmed sparse or low-effective-dimensional
+  structure (f6, f7, f8)
+- **Studying the pre-commitment experimental design framework** — where hypotheses,
+  decision rules, and failure conditions are specified in full before results are observed,
+  enabling honest evaluation of surrogate-guided strategies against their stated assumptions
+  
 **What are the inappropriate uses?**
-The dataset should not be used to claim statistically validated global optima. With N approximately 9 to 13 per function, no guarantee exists that the best-observed value is near the true global maximum. For f3 and f6, there is strong evidence from calibration metrics that the surrogate models' uncertainty is too compressed for reliable exploration, meaning the dataset may be missing high-value regions entirely. The dataset should also not be used to generalise structural findings — for instance, the finding that X3 dominates f5 is specific to f5 and cannot be extrapolated to other functions. It should not be used for high-stakes production decisions, and it should not be treated as if the calibration diagnostics validate the surrogate's accuracy; a CI pass means the surrogate's uncertainty was appropriately sized at the one queried point, not that the landscape reconstruction is correct.
+The dataset should not be used to:
+
+- **Claim statistically validated global optima** — with N approximately 9 to 13 active
+  submissions per function, no guarantee exists that the best-observed value is near the
+  true global maximum; the sequential sampling process may have missed high-value regions
+  entirely, particularly for functions with narrow productive subspaces (f1, f4) or
+  diffuse weakly-structured landscapes (f3, f7)
+- **Generalise structural findings across functions** — findings such as X3 dominating f5
+  or X1 and X3 defining the active subspace of f8 are specific to those functions and
+  cannot be extrapolated to other black-box problems
+- **Support high-stakes production decisions** — the dataset was generated under strict
+  educational budget constraints and is not a substitute for rigorous optimisation studies
+  with adequate evaluation budgets
+- **Treat diagnostic pass conditions as validation of landscape accuracy** — a confidence
+  interval pass or a favourable z-score means the surrogate's uncertainty was appropriately
+  sized at the one queried point; it does not imply that the surrogate's reconstruction
+  of the broader response surface is correct
 
 **Are there risks or limitations for future use?**  
-The most important bias is acquisition bias: after Week 1, all queries are drawn from regions the surrogate identified as promising, creating a highly non-uniform design. There is also a confirmation bias documented in the reflections — structural hypotheses formed in early weeks (e.g. that X3 dominates f5) influenced where later queries were placed, potentially self-confirming an incomplete picture of the surface. Strategy conflation is a persistent limitation: each week introduced multiple simultaneous changes (surrogate, acquisition function, hyperparameter tuning method, candidate generation strategy), making it often impossible to determine which specific component drove an improvement or regression from a single observation.
+The most consequential limitation of the dataset is **acquisition bias**: after Week 1,
+all queries were drawn from regions the surrogate identified as promising, producing a
+highly non-uniform design in which under-performing areas of the domain are systematically
+undersampled. This means the dataset cannot support claims about function behaviour outside
+the explored regions, and observed best values may reflect the limits of the search
+strategy rather than the limits of the function itself.
+
+A related limitation is **confirmation bias in structural hypothesis formation**. Structural
+beliefs established in early weeks — for example, that X3 dominates f5, or that the
+productive region of f4 is centred at mid-range values across all dimensions — directly
+influenced where later queries were placed. If those early beliefs were partially incorrect,
+the subsequent sampling pattern would have systematically reinforced an incomplete picture
+of the response surface rather than testing it.
+
+A third persistent limitation is **strategy conflation**. Each week typically introduced
+multiple simultaneous changes, including the surrogate model family, the acquisition
+function, the hyperparameter tuning method, and the candidate generation strategy. Because
+only one observation was returned per function per week, it is generally impossible to
+attribute an improvement or regression to any single component. The dataset therefore
+supports qualitative learning about which combinations of methods tended to work, but
+does not support controlled causal attribution of performance to individual design choices.
 
 
 ### Distribution
 
-**How has the dataset been distributed?**  
-The dataset exists as structured Markdown submission logs and review documents stored within the project knowledge repository for this competition. The raw data can be extracted from the tables in these documents into CSV or DataFrame format. No public repository has been designated.
+**How has the dataset been distributed?**
 
-**What are the terms of use?**  
-The dataset was generated within an academic module competition and is subject to the terms of that module. Sharing is currently limited to academic assessment contexts. Any use of the dataset should credit the competition framework from which the oracle function evaluations were obtained. The unknown functions f1 through f8 are proprietary to the competition and cannot be reverse-engineered from this dataset alone. The query points should not be submitted to any active iteration of the same competition.
+The dataset is stored within the project knowledge repository as two structured files:
+inputs_13.txt and outputs_13.txt, which contain the complete sequence of submitted
+candidate vectors and oracle returns across all thirteen weeks and all eight functions.
+The accompanying submission logs document strategies and reasoning but do not contain
+raw data. No public repository, API, or physical media distribution has been established.
+
+**When will the dataset be made available?**
+
+The dataset is currently available within the academic assessment context for which it
+was produced. Any future distribution beyond this context would require explicit approval
+from the course administrators responsible for the competition oracle.
+
+**What are the terms of use?**
+
+The dataset was generated within an academic module competition at Imperial Business
+School. Sharing is limited to academic assessment contexts. Any use should credit the
+competition framework from which the oracle evaluations were obtained. The functions
+f1 through f8 are proprietary to the competition and cannot be reverse-engineered from
+this dataset alone. Query points must not be submitted to any active or future iteration
+of the same competition. No fees or royalties are associated with legitimate academic use.
+
+**Additional comments**
+
+The dataset is best used as eight (X, y) DataFrames reconstructed from inputs_13.txt
+and outputs_13.txt. Researchers should note that observations are sequentially dependent
+and the sampling design is heavily non-uniform due to acquisition bias, making the
+dataset well suited for studying sequential surrogate-based decision-making but not for
+tasks assuming independent and identically distributed samples.
 
 
 ### Maintenance
 
-**Who maintains the dataset?**  
-The dataset is maintained by the student researcher who generated it. It is append-only within the competition cycle: each weekly submission adds exactly one record per function and no prior records are modified. If an EDA or calibration error is discovered in a prior week, the correction is documented in the subsequent week's review rather than retroactively altering the original record, preserving the integrity of the sequential experimental log.
-At competition close (Week 13), the complete set of submission logs and review documents will constitute the final archive, stored as part of the academic coursework submission. Retention follows institutional data retention policies for coursework. There is no version control system beyond the implicit week-number versioning; each week's documents are an append to the record, not a replacement of it.
+The dataset was created and maintained by the student researcher throughout the duration
+of the project. It is append-only: each weekly submission adds exactly one record per
+function and no prior records are modified. Corrections discovered after submission are
+documented in the following week's log rather than applied retroactively, preserving the
+integrity of the sequential experimental record.
+
+Versioning is implicit through week numbering. The dataset is considered complete and
+frozen at Week 13, with the input and output files and submission logs together
+constituting the final archive stored as part of the academic coursework submission.
+Retention follows Imperial Business School's institutional data retention policies for
+coursework.
