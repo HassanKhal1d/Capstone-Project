@@ -154,9 +154,9 @@ specifically for:
 - **Studying the pre-commitment experimental design framework** — where hypotheses,
   decision rules, and failure conditions are specified in full before results are observed,
   enabling honest evaluation of surrogate-guided strategies against their stated assumptions
-  
+
 **What are the inappropriate uses?**
-The dataset should not be used to:
+ The dataset should not be used to:
 
 - **Claim statistically validated global optima** — with N approximately 9 to 13 active
   submissions per function, no guarantee exists that the best-observed value is near the
