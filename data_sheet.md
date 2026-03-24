@@ -1,55 +1,104 @@
-# Dataset Datasheet | Black Box Optimisation Capstone Project
+# Dataset Datasheet | Black Box Optimization Capstone Project
 
 
 | Category        | Details |
 |-----------------|--------|
 | **Competition** | Black-Box Optimisation (BBO) — Academic Module Competition |
-| **Functions** | f1 (2D), f2 (2D), f3 (4D), f4 (5D), f5 (5D), f6 (6D), f7 (7D), f8 (9D) |
+| **Functions** | f1 (3D), f2 (3D), f3 (4D), f4 (5D), f5 (5D), f6 (6D), f7 (7D), f8 (9D) |
 | **Input domain** | \[0, 1\]^d for all functions; all dimensions bounded identically |
 | **Objective** | Maximise the unknown scalar output of each function |
 | **Query budget** | 13 submissions across all functions; 1 query per function per week |
-| **Weeks covered** | Week 0 (initial) through Week 9 (final observed submission) |
-| **Total records** | ~9 query-response pairs per function across 9 active weeks (approx. 72 total rows across all functions) |
-| **Primary use** | Surrogate modelling, Bayesian optimisation, experimental design research |
+| **Primary use** | Surrogate modelling, Bayesian optimization, experimental design research |
 
 
 ### Motivation
 
 **What task does this dataset help to solve?**  
-This dataset was generated to support sequential black-box optimisation across eight unknown scalar functions, f1 through f8, of varying dimensionality (2D to 9D). All inputs are constrained to [0,1]^d. The task is to find the global maximum of each function using only the observed input-output pairs, with no access to gradients, functional form, or noise structure. The dataset records every query submitted to the competition oracle and the corresponding output returned, forming the empirical basis for surrogate model fitting, acquisition function design, and landscape structure discovery.
+This dataset was generated to support sequential black-box optimization across eight unknown functions, f1 through f8, of varying dimensionality (3D to 9D). All inputs are constrained to [0,1]^d. The task is to find the global maximum of each function using only the observed input-output pairs, with no access to gradients, functional form, or noise structure. The dataset records every query submitted to the competition oracle and the corresponding output returned, forming the empirical basis for surrogate model fitting, acquisition function design, and landscape structure discovery.
 
 **Who created the dataset and who funded it?**  
-The dataset was created by a single student researcher participating in an academic BBO competition. The motivation was dual: to maximise best-observed values within a constrained 13-submission budget, and to develop genuine understanding of surrogate-based optimisation, uncertainty calibration, and experimental reasoning under small-sample-size conditions. Crucially, the data collection was designed around a pre-commitment framework where hypotheses, key assumptions, and decision rules were written down before each submission's result was observed. This was a deliberate methodological choice to prevent retrospective rationalisation, a risk the weekly reflections showed was very real, particularly when calibration metrics passed but acquisition outcomes regressed simultaneously. The competition was run within an academic module. No external funding was received. All computations used open-source Python libraries, primarily scikit-learn, GPy, scipy, and numpy, alongside reference implementations from published BBO competition papers including the NeurIPS 2020 entries by NVIDIA, Optuna/Duxiaoman, and JetBrains.
+The dataset was provided as part of a Bayesian Optimization competition within the ML and AI certificate programme delivered by Imperial College Business School in collaboration with Emeritus. The underlying function generator used to create the dataset was not publicly disclosed, and therefore cannot be definitively attributed to either institution. All observed data points were generated through the student’s sequential submissions during the competition, under a constrained evaluation budget, forming the final dataset used for analysis.
 
 
 ### Composition
 
 **What does it contain?**  
-The dataset consists of eight sub-datasets, one per function. Each record is an input-output pair: a d-dimensional vector x drawn from [0,1]^d and the corresponding scalar y = f(x) returned by the oracle. Across all functions and all weeks, the total dataset accumulates approximately 72–80 (x, y) pairs by Week 9, with roughly 9–13 records per function depending on whether the Week 0 initial point is included.The functions differ substantially in scale, structure, and effective dimensionality, which makes the dataset heterogeneous by design. f1 and f2 are 2D with outputs ranging from near-zero (f1, effectively flat at values around 1e-57 to 1e-223) to moderately positive (f2, range approximately −0.08 to 0.68). f5 spans four orders of magnitude from around 685 to 4171, requiring log-transformation for stable surrogate fitting. f8 is 9-dimensional with a relatively narrow output range of 8.4 to 9.84. The structural character of each function was progressively discovered through EDA: f1 is confirmed flat with no exploitable structure; f2 has a dominant X1 monotonic trend; f5 has a dominant X3 gradient with the optimum concentrated near the X3=1.0 boundary; f6 has a confirmed active subspace in X4 and X5 (partial correlations r=0.564 and r=−0.590, both p<0.01); f8's active subspace is X1, X3, and X7 confirmed by ARD length-scale convergence and SVM-RFE agreement.Alongside the raw (x, y) pairs, the dataset is annotated with per-week calibration diagnostics computed from each surrogate's predictions at the queried point: the negative log-likelihood (NLL), z-score, 95% CI pass/fail, quantile position, and calibration gap. These are stored in the review documents rather than the raw query logs, but they are part of the dataset as a whole because they document the reliability of each decision and are essential for understanding the trajectory of the optimisation.
+The dataset comprises eight independently sampled black-box function datasets (f1–f8), collectively containing 271 input–output observations accumulated across thirteen weeks of sequential Bayesian optimization submissions. Each observation consists of a normalised input vector drawn from [0, 1]^d and a scalar oracle output, with dimensionality ranging from two (f1, f2) to eight (f8). All data were generated through active experimentation rather than drawn from a pre-existing corpus, meaning the datasets are incomplete samples of their respective continuous domains and carry no recommended train/test split. Instance counts at the close of Week 13 range from 22 observations (f1, f2) to 52 (f8), reflecting both the per-function submission budget and the varying difficulty of identifying productive regions. No missing values or incomplete instances are present. The datasets exhibit substantial structural heterogeneity: output ranges span from a narrow interval of roughly 0.76 units (f2) to over five orders of magnitude (f5), and the proportion of observations that lie in high-value regions varies from nearly all (f8) to fewer than five percent (f1, f4, f7). Observations within each function are sequentially dependent, as every week's sampling strategy was conditioned on all prior results, making the datasets more informative than equivalent random samples of the same size but also subject to sequential sampling bias toward regions identified as promising in earlier weeks.
 
-**Are there gaps?**  
-Several gaps exist and must be honestly acknowledged. First, sample sizes are very small — approximately 9 to 13 per function by Week 9. This is insufficient for reliable cross-validation with more than 3 folds on the higher-dimensional functions, and mutual information and partial correlation estimates at these sample sizes are unreliable, particularly in Weeks 2 through 4 where MI values were sometimes treated as more confirmatory than they warranted. The reflections from Week 5 explicitly acknowledged this: MI estimates at N=15 should be treated as exploratory signals, not confirmed structural findings.
-Second, there is no replication. Each domain point is queried at most once, so there is no direct estimate of measurement noise from repeated observations. Whether there is observation noise in the oracle outputs is itself unknown, which is one reason heteroskedastic GP models were tested from Week 3 onward.
-Third, the dataset has systematic non-uniform coverage. Weeks 2 through 9 used model-based acquisition rather than space-filling designs, concentrating observations near perceived optima. The early random sample from Week 1 provides the only approximately uniform coverage, and even that was a single Latin hypercube draw per function.
-Fourth, the best-observed trajectory reveals a persistent stagnation problem from Week 3 or 4 onward for several functions. f6's best of −0.5649 was found in Week 2 and was not beaten through Week 9 despite seven further submissions. f3's best of −0.03483 was found in Week 0 and was not beaten at all. f5's best of 4171 was found in Week 3 and was not beaten despite it being the function with the clearest structural signal. These stagnations are not gaps in the data per se, but they represent regions of the input space that the acquisition framework failed to reach, meaning the dataset has a structural blind spot in those high-value areas.
+
+| Function | Dimensions | N (Week 13) | Output Range | Best y | Active Dimensions | Primary Challenge |
+|----------|-----------|-------------|-------------|-----------------|-------------------|-------------------|
+| f1 | 2 | 22 | ~[−3.6×10⁻³, 6.6×10⁻⁶] | 6.6 × 10⁻⁶ | X2 only | Ultra-narrow ridge; 200 order-of-magnitude output span |
+| f2 | 2 | 22 | [−0.080, 0.682] | 0.682 | X1 (dominant), X2 (secondary) | Small sample; GP hyperparameter instability |
+| f3 | 3 | 27 | [−0.399, −0.026] | −0.026 | X2, X3 (separable) | High noise; flat plateau; KNN > GP throughout |
+| f4 | 4 | 43 | [−32.6, 0.555] | 0.555 | All 4 (isotropic) | Extremely narrow positive plateau; catastrophic walls |
+| f5 | 4 | 33 | [0.113, 8343.2] | 8343.2 | X2, X3 (dominant) | Heavy-tailed; 5-order magnitude range; monotone corner |
+| f6 | 5 | 33 | [−2.757, −0.225] | −0.225 | X4, X5 (94% variance) | Broad smooth tilt; no sparse subspace despite prior belief |
+| f7 | 6 | 42 | [0.003, 2.695] | 2.695 | X6 (highly active), X1, X2 | Isolated basin; weak global structure; 91% observations y < 0.7 |
+| f8 | 8 | 52 | [5.541, 9.966] | 9.966 | X1, X3, X7 | Near-deterministic; dual-basin structure; inactive dimension fixing critical |
+
 
 
 ### Collection Process
 
 **How was the data acquired?**  
-Queries were generated through a sequential Bayesian optimisation pipeline executed once per week per function. The core loop was: fit a surrogate model to all accumulated (x, y) pairs; optimise an acquisition function over [0,1]^d to select the next candidate; submit to the oracle; append the returned (x, y) pair to the dataset; update EDA. This loop ran for nine active weeks (Weeks 1 through 9), with Week 0 providing the initial oracle-supplied point.
+QQueries were generated through a sequential Bayesian optimisation pipeline executed once per week per function. The core loop was: fit a surrogate model to all accumulated (x, y) pairs; optimise an acquisition function over [0,1]^d to select the next candidate; submit to the oracle; append the returned (x, y) pair to the dataset; update EDA. This loop ran for thirteen active weeks (Weeks 1 through 13), with Week 0 providing the initial oracle-supplied point for each function.
 
-**Sampling strategy**  
-Week 1 used uniform random sampling, effectively a space-filling initialisation. Week 2 introduced a homoskedastic GP with RBF kernel and UCB acquisition with a uniform exploration parameter β, tuned by a coarse grid search over β and length-scale. This was the first surrogate-based strategy, and the Week 2 reflection confirmed the first major failure: uniform UCB without per-function calibration underexplored extreme or steep regions (f1 through f4), with the root cause being uncertainty miscalibration — GP variance underestimated the true output variability in those regions.
-Week 3 introduced per-function feature-guided sampling informed by Pearson, Spearman, Kendall, mutual information, and partial correlation EDA, paired with function-specific UCB β values and a pseudo-heteroskedastic GP. This was the most productive week by far, producing the all-time best values for f4 (0.071), f5 (4171), and confirming the landscape structures that guided subsequent weeks.
-Week 4 added SVM (ε-SVR with RBF kernel), KNN, and XGBoost to form ensemble surrogates with cross-validation-based weighting. This also introduced variance inflation (3× posterior standard deviation scaling) to address the severe GP overconfidence that caused CI failures and z-scores beyond ±4 for f7 in Week 3. The Week 4 reflection documented the key learning: variance inflation successfully rehabilitated a catastrophically miscalibrated model for f4 and f7, but the ensemble averaging itself suppressed posterior variance for other functions, replacing one form of miscalibration with another. The cross-function calibration table from Week 4 showed NLL, z-score, calibration gap, and CI results for all eight functions simultaneously for the first time, making it possible to identify which functions had genuine structural information and which had model artefacts.
-Weeks 5 and 6 introduced several refinements based on those reflections: WhiteKernel noise absorption was restored after it was found that its removal in Week 5 caused overconfident predictions (z=2.02, CI FAIL for f2 even when a new best was found); TuRBO's trust region restriction was removed for functions where it prevented exploration of the full domain; and SVM masking was removed when the decision boundary proved unreliable at N=35. The philosophy for Week 6 was deliberately conservative: restore the simplest validated configuration and stop adding complexity that had not been validated on these specific functions.
-Week 7 applied competition-validated acquisition methods motivated by the published BBO competition literature — Max Value Entropy Search for f2 (from SigOpt/Eriksson et al. 2021), CMA-ES hyperparameter tuning for f1 (from BBOB COCO 2013), TuRBO-M with three parallel trust regions for f7, opposition-based sampling for f4 (from GECCO 2022), and Differential Evolution for f6. The Week 8 reflection explicitly records that most of these produced no improvement or regression. The core lesson was that competition-winning methods designed for general function classes do not necessarily transfer to specific unknown functions, and that empirically validated configurations on the specific functions are more reliable than theoretically motivated alternatives that have not been tested on them.
-Weeks 8 and 9 focused on recovery: restoring the surrogate configurations that had actually found the best values, applying asymmetric ARD length-scale bounds (motivated by Bull 2011) to prevent the HP optimiser from collapsing to structurally incorrect hyperparameter regions, and using KRR (Kernel Ridge Regression) as a decoupled mean estimator combined with a fixed GP for uncertainty, so that the acquisition UCB score drew on KRR's stable mean and GP's calibrated variance separately.
+**Sampling Strategy**
+The sampling strategy was neither purely random nor fully deterministic; it was adaptive
+and hypothesis-driven, evolving materially across weeks in response to observed outcomes.
+Week 1 used uniform random sampling to establish a baseline. From Week 2 onward, candidate
+points were selected by optimising acquisition functions over surrogate models fitted to all
+accumulated observations. The primary acquisition functions employed were:
+
+- **Upper Confidence Bound (UCB)** — used throughout Weeks 2–8 as the default exploratory
+  mechanism, with function-specific β parameters adjusted to balance exploration and exploitation
+- **Expected Improvement (EI)** — adopted from Week 3 onward for functions with well-identified
+  basins, particularly f4 and f5, where the goal shifted to beating a known incumbent
+- **Thompson Sampling** — applied selectively in Weeks 5 and 7 to inject stochastic diversity
+  and escape confirmed local maxima
+- **Max Value Entropy Search (MES)** — trialled on f2 in Week 7 as a competition-backed
+  alternative targeting global maximum uncertainty reduction
+- **Log Expected Improvement (LogEI)** — introduced in Weeks 10–13 for near-ceiling functions
+  (f5, f8) where standard EI suffered numerical instability near strong incumbents
+
+Surrogate models evolved in parallel, progressing from single Gaussian Processes with RBF
+or Matérn kernels through increasingly structured configurations:
+
+- **Gaussian Processes with ARD kernels** — the primary global surrogate throughout, with
+  asymmetric length-scale bounds introduced from Week 8 to enforce known active subspace
+  structure
+- **Support Vector Regressors, k-Nearest Neighbours, and XGBoost** — incorporated as ensemble
+  components from Week 4 onward, weighted by cross-validated inverse MSE
+- **Kernel Ridge Regression** — adopted for f3 from Week 9 as a numerically stable alternative
+  to GP marginal likelihood optimisation at small sample sizes
+- **Nadaraya–Watson kernel regression** — used on f2 in Week 11 when GP hyperparameter
+  fitting became unreliable
+
+Candidate generation relied on quasi-random **Sobol** and **Halton** sequences to ensure
+low-discrepancy domain coverage, consistently filtered by minimum-distance guards
+(δ_min ∈ [0.02, 0.07] depending on function and week) to prevent near-duplicate evaluations.
+From Week 9 onward, for functions where structural knowledge was sufficient, deterministic
+or geometry-first methods replaced acquisition-function-driven selection entirely:
+
+- **Quadratic ridge extrapolation in log₁₀ space** for f1, targeting the estimated peak of
+  the X2 ridge directly from three locally informative observations
+- **Maximin gap-filling** for f2 and f3, placing queries at the largest unsampled gap within
+  the confirmed high-value region when surrogate models were too unstable to guide selection
+- **Corner-restricted GP posterior mean maximisation with per-dimension floors** for f5,
+  reflecting confirmed monotone structure toward the (1,1,1,1) boundary
+- **Active-subspace-fixed LogEI with inactive dimensions anchored to incumbent values** for f8,
+  reducing the effective search space from eight to three dimensions
+
+As a result, the accumulated datasets are subject to **sequential sampling bias**: regions
+identified as promising early in the process are systematically over-represented relative to
+a uniform random sample of the same size. Functions where the productive region was identified
+early (f5, f8) have the most concentrated late-stage observations, while functions that
+resisted structural identification (f3, f7) retain comparatively more dispersed coverage
+across the domain.
 
 **Time frame of data collection**  
-Data collection spanned nine active submission cycles across one academic term, with one query per function per cycle. Cycles were not strictly weekly calendar weeks; some gaps occurred between submissions. The total elapsed real time was approximately 10 to 12 weeks.
-
+Data were collected over fourteen discrete weeks (Week 0 through Week 13) during the Spring 2025 term of the Imperial Business School BBO Capstone Project. Each week constituted one observation per function, yielding a maximum of fourteen observations per function from the submission process. Week 0 observations were provided by the course oracle as fixed starting points and were not chosen by the student. The total active collection period spanned approximately thirteen weeks of sequential decision-making, with one candidate submitted per function per week under a strict budget constraint. No data were collected outside this structured weekly cadence, and no retrospective or batch collection took place.
 
 ### Preprocessing / Cleaning / Labelling
 
