@@ -98,7 +98,7 @@ realistic budget and uncertainty constraints.
 
 ### Input Format
 
-Each function fi accepts a d-dimensional input vector x drawn from the unit
+Each function f{i} accepts a d-dimensional input vector x drawn from the unit
 hypercube [0, 1]^d. Dimensions vary by function:
 
 | Function | Dimensions (d) | Input Variables |
@@ -300,10 +300,34 @@ Week:  0      1      2      3      9      10     11     12     13
 Best:  7e-16  7e-16  7e-16  5e-15  2e-9   2e-8   6e-7   7e-6   7e-6
 ```
 
+**f2**
+```
+Week:  0      7      13
+Best:  0.61   0.68   0.68
+```
+
+**f3**
+```
+Week:  0      11      12      13
+Best:  -0.03  -0.027  -0.025  -0.025
+```
+
+**f4**
+```
+Week:  0      1      3      6      10     13
+Best:  -4.02  -1.80  0.07   0.34   0.55   0.55
+```
+
 **f5**
 ```
 Week:  0     1     2     3     7     10    11    12    13
 Best:  1089  1089  2434  4171  6575  6972  7735  8219  8343
+```
+
+**f6**
+```
+Week:  0      1      2      9      10     13
+Best:  -0.71  -0.68  -0.56  -0.24  -0.22  -0.22
 ```
 
 **f7**
@@ -382,12 +406,12 @@ all hypotheses and failure conditions are stated before results are observed.
 
 ## 9. Contact
 
-**Author:** Hassan Khalid
-**Programme:** Professional Certification in Machine Learning and Artificial Intelligence, Imperial Business School
-**Timeline:** 2025/2026
-**Email:** H.Khalid-22@student.lboro.ac.uk
-**LinkedIn:** https://www.linkedin.com/in/hassan-khalid-160b36280/
-**GitHub:** https://github.com/HassanKhal1d
+**Author:** [Hassan Khalid]
+**Programme:** [Professional Certification in Machine Learning and Artificial Intelligence, Imperial Business School]
+**Timeline:** [2025/2026]
+**Email:** [H.Khalid-22@student.lboro.ac.uk]
+**LinkedIn:** [https://www.linkedin.com/in/hassan-khalid-160b36280/]
+**GitHub:** [https://github.com/HassanKhal1d]
 
 ---
 
