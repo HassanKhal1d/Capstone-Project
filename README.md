@@ -442,6 +442,23 @@ The following academic works directly informed the technical approach:
 ---
 
 ### Visuals
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/e2b198fc-00f6-45b7-a2e2-e5e93343a549" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/f1a2e120-f578-44c9-ac01-e61956c7901c" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/c2c06d7a-22f5-4a34-97eb-85fc2bf63d9e" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/702fb8a5-5e85-495f-b639-1338a8f69429" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/fe884e92-371b-45c0-b99b-99c365f020ef" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/6461d8c5-dcc6-41b3-8cdc-85bb2a652d35" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/82215e43-35d9-4b78-8899-8d8fc39f97dd" />
+<img width="984" height="584" alt="download" src="https://github.com/user-attachments/assets/384cb316-a1d7-4903-897c-167c70c753bc" />
+<img width="1396" height="527" alt="image" src="https://github.com/user-attachments/assets/af6f8d57-4065-45c4-b475-5638070f5d38" />
+<img width="921" height="337" alt="image" src="https://github.com/user-attachments/assets/28b68dbd-36a5-40a4-b99c-df65fccdddd0" />
+<img width="860" height="332" alt="image" src="https://github.com/user-attachments/assets/d480a8cd-f09a-49d9-ade1-9a2916f660b9" />
+<img width="1292" height="332" alt="image" src="https://github.com/user-attachments/assets/3aa2093a-f0b9-48f6-8415-7369e20ba7b7" />
+<img width="1732" height="335" alt="image" src="https://github.com/user-attachments/assets/cd7e668d-a5ce-42e1-861c-435715b473c8" />
+<img width="1738" height="351" alt="image" src="https://github.com/user-attachments/assets/a7747156-3568-4ce6-adc0-0e9b8b29c209" />
+<img width="1606" height="1184" alt="download" src="https://github.com/user-attachments/assets/a807e37a-8583-48b2-86b3-635b1faebb2a" />
+<img width="1178" height="584" alt="download" src="https://github.com/user-attachments/assets/c9488cce-7486-4f14-ad03-0ef4453e6cb0" />
+<img width="1179" height="884" alt="download" src="https://github.com/user-attachments/assets/aff0a11a-320d-4d86-8ded-cdc166a383f1" />
 
 ---
 
