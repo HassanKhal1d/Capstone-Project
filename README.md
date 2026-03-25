@@ -406,12 +406,12 @@ all hypotheses and failure conditions are stated before results are observed.
 
 ## 9. Contact
 
-**Author:** [Hassan Khalid]
-**Programme:** [Professional Certification in Machine Learning and Artificial Intelligence, Imperial Business School]
-**Timeline:** [2025/2026]
-**Email:** [H.Khalid-22@student.lboro.ac.uk]
-**LinkedIn:** [https://www.linkedin.com/in/hassan-khalid-160b36280/]
-**GitHub:** [https://github.com/HassanKhal1d]
+**Author:** [Hassan Khalid] |
+**Programme:** [Professional Certification in Machine Learning and Artificial Intelligence, Imperial Business School] |
+**Timeline:** [2025/2026] |
+**Email:** [H.Khalid-22@student.lboro.ac.uk] |
+**LinkedIn:** [https://www.linkedin.com/in/hassan-khalid-160b36280/] |
+**GitHub:** [https://github.com/HassanKhal1d] |
 
 ---
 
