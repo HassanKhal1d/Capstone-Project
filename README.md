@@ -32,6 +32,23 @@
 
 ## 1. Project Overview
 
+**Non Technical Explanation**
+
+Imagine you are trying to find the highest point in a vast, foggy landscape where
+you can only take one step at a time and each step costs you something. You cannot
+see the terrain ahead, you have no map, and every step is permanent. That is
+exactly the challenge this project tackles, applied to eight different mathematical
+landscapes simultaneously over 13 weeks.
+
+Each week, a decision was made about where to step next based on everything learned
+so far. Smarter stepping strategies were developed over time, moving from random
+guesses toward targeted, evidence-based decisions. By the final week, all eight
+landscapes had been meaningfully improved, with one function improving by a factor
+of over eight billion from its starting point. The project finished 9th out of 51
+participants.
+
+**Formal Description**
+
 This repository documents a 13-week sequential **Black-Box Optimisation (BBO)**
 challenge conducted as part of the MSc Financial Technology capstone at Imperial
 Business School. The challenge involves optimising eight unknown oracle functions
